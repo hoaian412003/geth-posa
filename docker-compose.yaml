@@ -1,0 +1,50 @@
+services:
+
+  init_node1: # init node1
+    image: ethereum/client-go:latest
+    container_name: init_node
+    command: init --datadir node /node/genesis.json
+    volumes:
+      - ./node_data:/node
+
+  node1:
+    image: playground-ethereum:latest
+    container_name: node
+    depends_on:
+      init_node1:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    command:
+      - --networkid=6868
+      - --datadir=/node
+      # - --bootnodes=${ENODE}
+      - --port=30303
+      - --syncmode=full
+      - --ipcdisable
+      - --allow-insecure-unlock
+      - --unlock=${WALLET_ADDRESS}
+      - --password=/node/password.txt
+      - --mine
+      - --http
+      - --http.addr=0.0.0.0
+      - --http.api=eth,net,web3,personal,miner,txpool,admin,clique,debug,db
+      - --http.port=8888
+      - --authrpc.port=8552
+      - --http.vhosts=*
+      - --http.corsdomain=*
+      - --miner.etherbase=${WALLET_ADDRESS}
+      - --ws
+      - --ws.addr=0.0.0.0
+      - --ws.port=3334
+      - --ws.api=eth,net,web3,personal,miner,txpool,admin,clique
+      - --ws.origins="*"
+      - --gcmode=archive
+    volumes:
+      - ./node_data:/node
+    ports:
+      - 8888:8888
+      - 8552:8552
+      - 3334:3334
+      - "30303:30303/tcp"
+      - "30303:30303/udp"
